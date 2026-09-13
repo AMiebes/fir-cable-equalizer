@@ -17,7 +17,7 @@ module FIR #(
     localparam ACCU_WIDTH = IN_WIDTH + COEFF_WIDTH + $clog2(NTAPS);
     localparam SHIFT_AMOUNT = FRAC_WIDTH;
     
-    // Definition der Grenzwerte für Saturation (auf ACCU_WIDTH erweitert für sauberen Vergleich)
+    // Definition der Grenzwerte für Saturation
     localparam signed [ACCU_WIDTH-1:0] MAX_POS = $signed({ {(ACCU_WIDTH-IN_WIDTH+1){1'b0}}, {(IN_WIDTH-1){1'b1}} });
     localparam signed [ACCU_WIDTH-1:0] MAX_NEG = $signed({ {(ACCU_WIDTH-IN_WIDTH+1){1'b1}}, {(IN_WIDTH-1){1'b0}} });
 
@@ -50,13 +50,30 @@ module FIR #(
         end
     end
 
-// --- Output Assignment (Truncation) ---
+    // --- Rounding & Saturation Logic ---
+    wire signed [ACCU_WIDTH-1:0] round_add;
+    wire signed [ACCU_WIDTH-1:0] rounded_value;
+    wire signed [ACCU_WIDTH-1:0] shifted_value;
+
+    // Runden: Addieren von 0.5 (LSB-Position vor dem Shift)
+    assign round_add = (1 << (SHIFT_AMOUNT - 1));
+    assign rounded_value = pipeline_reg[0] + round_add;
+    
+    // Arithmetischer Shift (erhält das Vorzeichenbit)
+    assign shifted_value = rounded_value >>> SHIFT_AMOUNT;
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             signal_out <= {IN_WIDTH{1'b0}};
         end else begin
-            // Arithmetic right shift (Truncation)
-            signal_out <= pipeline_reg[0] >>> SHIFT_AMOUNT;
+            // Überprüfung auf Überlauf/Unterlauf
+            if (shifted_value > MAX_POS) begin
+                signal_out <= {1'b0, {(IN_WIDTH-1){1'b1}}}; // Positives Maximum
+            end else if (shifted_value < MAX_NEG) begin
+                signal_out <= {1'b1, {(IN_WIDTH-1){1'b0}}}; // Negatives Maximum
+            end else begin
+                signal_out <= shifted_value[IN_WIDTH-1:0];  // Wert passt
+            end
         end
     end
 
