@@ -24,3 +24,18 @@ The module (`hdl/FIR.v`) uses a transposed FIR topology to maximize performance:
 * **Bit-Exact Rounding:** Implements symmetric round-to-nearest logic via arithmetic offset (`1 << (SHIFT_AMOUNT - 1)`) prior to bit-shifting.
 * **Overflow Protection (Saturation):** Output logic automatically clamps signals to `MAX_POS` or `MAX_NEG` upon arithmetic overflow/underflow instead of severe signal wrapping.
 * **Flattened Coefficient Interface:** Vectors are passed via a single flat input bus (`coeffs_flat`) for simplified top-level routing.
+
+---
+
+## 🧪 Verification Infrastructure
+
+The project features a modular Python-based testbench framework powered by **Cocotb** and **Icarus Verilog**:
+
+* **Modular Test Architecture:** Clean separation between hardware abstraction (`utils/`), golden Python reference model (`models/`), test sequences (`tests/`), and Scoreboard checking.
+
+### Directory Structure
+```text
+tb/
+├── models/       # Python Golden Model implementation
+├── tests/        # Test cases & stimulus generation
+└── utils/        # Hardware drivers, Monitor, and Scoreboard logic

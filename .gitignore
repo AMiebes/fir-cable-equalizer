@@ -1,1 +1,16 @@
+# Vivado Projects & Logs
 vivado/*
+*.log
+*.jou
+*.pb
+
+# Python Bytecode
+__pycache__/
+*.pyc
+
+# Cocotb & Simulator Artifacts
+tb/results.xml
+tb/sim_build/
+sim_build/
+*.vcd
+*.fst
